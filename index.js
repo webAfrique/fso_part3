@@ -24,6 +24,11 @@ let persons = [
       "name": "Mary Poppendieck", 
       "number": "39-23-6423122",
       "id": 4
+    },
+    { 
+      "name": "Man of sin", 
+      "number": "666-666666",
+      "id": 5
     }
   ]
 
@@ -44,17 +49,20 @@ const generateId = () => {
 
 app.post('/api/persons', (request, response) => {
   const body = request.body
-
-  if (!body.content) {
+  const existing_contact = persons.filter(person => {
+    return person.name === body.name;
+  })[0];
+  if (existing_contact) {
+    return response.status(400).json(`${existing_contact.name} already exists`)
+  }else if (!body.name) {
     return response.status(400).json({ 
-      error: 'content missing' 
+      error: 'contact name missing' 
     })
+  }else if(!body.number){
+    return response.status(400).json({error: 'number missing'})
   }
 
-  const person = {
-    content: body.content,
-    id: generateId()
-  }
+  const person = {...body, id: generateId()}
 
   persons = persons.concat(person)
 
@@ -68,7 +76,7 @@ app.get('/api/persons/:id', (request, response) => {
   if (person) {
     response.json(person)
   } else {
-    response.status(404).end()
+    response.status(404).json({error: 'contact not found'})
   }
 })
 
@@ -76,7 +84,7 @@ app.delete('/api/persons/:id', (request, response) => {
   const id = Number(request.params.id)
   persons = persons.filter(person => person.id !== id)
 
-  response.status(204).end()
+  response.status(204).send('deleted')
 })
 
 app.get('/info', (request, response) => {
